@@ -1,0 +1,11 @@
+__pycache__/
+*.ipynb
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.zip
+nltk_data/
+venv/
+*.log
+assets/
