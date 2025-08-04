@@ -1,13 +1,24 @@
 from flask import Flask, request, jsonify
 from match_score import compute_match_score_with_breakdown
+import nltk
+
+# Download required NLTK data on startup
+nltk.download("stopwords")
+nltk.download("wordnet")
+nltk.download("omw-1.4")
 
 app = Flask(__name__)
 
+# Health check route for Cloud Run
+@app.route("/")
+def health():
+    return "✅ Match Score API is running!"
+
+# Main scoring route
 @app.route("/match-score", methods=["POST"])
 def match_score():
     data = request.get_json()
 
-    # ✅ Log the received input for debugging
     print("🔍 Received JSON input:")
     print(data)
 
@@ -22,6 +33,6 @@ def match_score():
 
     return jsonify(result)
 
+# Start Flask app on required host/port
 if __name__ == "__main__":
-    import os
-    app.run(host="0.0.0.0", port=10000)
+    app.run(host="0.0.0.0", port=8080)

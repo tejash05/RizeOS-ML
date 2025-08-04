@@ -2,24 +2,21 @@
 FROM python:3.10-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
 
-# Copy files
+# Copy code
 COPY . /app
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Download NLTK data (if needed)
-RUN python -m nltk.downloader stopwords wordnet omw-1.4
+# Expose the port Cloud Run expects
+EXPOSE 8080
 
-# Expose the port
-EXPOSE 6000
-
-# Run the app
+# Start Flask app
 CMD ["python", "ml_api.py"]
