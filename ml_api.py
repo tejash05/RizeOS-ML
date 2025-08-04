@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from match_score import compute_match_score_with_breakdown
 import nltk
 
@@ -8,8 +9,9 @@ nltk.download("wordnet")
 nltk.download("omw-1.4")
 
 app = Flask(__name__)
+CORS(app)  # ✅ Enable CORS globally
 
-# Health check route for Cloud Run
+# Health check route
 @app.route("/")
 def health():
     return "✅ Match Score API is running!"
@@ -33,6 +35,6 @@ def match_score():
 
     return jsonify(result)
 
-# Start Flask app on required host/port
+# Start Flask app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
