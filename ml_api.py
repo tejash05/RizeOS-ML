@@ -16,24 +16,39 @@ CORS(app)  # ✅ Enable CORS globally
 def health():
     return "✅ Match Score API is running!"
 
-# Main scoring route
+# Match scoring route (supports both single and batch inputs)
 @app.route("/match-score", methods=["POST"])
 def match_score():
     data = request.get_json()
 
-    print("🔍 Received JSON input:")
-    print(data)
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
-    job_desc = data.get("jobDescription", "")
-    job_skills = data.get("jobSkills", [])
-    candidate_bio = data.get("candidateBio", "")
-    candidate_skills = data.get("candidateSkills", [])
+    # Handle single object
+    if isinstance(data, dict):
+        data = [data]
 
-    result = compute_match_score_with_breakdown(
-        job_desc, job_skills, candidate_bio, candidate_skills
-    )
+    # Must be a list at this point
+    if not isinstance(data, list):
+        return jsonify({"error": "Invalid input format. Must be an object or list of objects."}), 400
 
-    return jsonify(result)
+    print(f"🔍 Received {len(data)} job-candidate pairs")
+
+    results = []
+    for item in data:
+        job_desc = item.get("job_description") or item.get("jobDescription", "")
+        job_skills = item.get("job_skills") or item.get("jobSkills", [])
+        candidate_bio = item.get("candidate_bio") or item.get("candidateBio", "")
+        candidate_skills = item.get("candidate_skills") or item.get("candidateSkills", [])
+
+        result = compute_match_score_with_breakdown(
+            job_desc, job_skills, candidate_bio, candidate_skills
+        )
+
+        # Do NOT include title in output
+        results.append(result)
+
+    return jsonify(results if len(results) > 1 else results[0])
 
 # Start Flask app
 if __name__ == "__main__":
