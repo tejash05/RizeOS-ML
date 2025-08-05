@@ -6,6 +6,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer, PorterStemmer
 from nltk.tokenize import RegexpTokenizer
 import nltk
+from flask_cors import CORS
 
 # 📦 Setup NLTK
 nltk.data.path.append("/Users/tejashtarun/nltk_data")
