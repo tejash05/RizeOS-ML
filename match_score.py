@@ -104,7 +104,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
 
-# 🧠 Load once globally
+# 🧠 Load model & tools once globally
 embedder = SentenceTransformer("thenlper/gte-large")
 stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
@@ -147,6 +147,7 @@ def batch_compute_scores(data):
     cleaned_inputs = []
     string_cache = {}
 
+    # Step 1: Clean and prepare input
     for item in data:
         job_desc = clean_text(item.get("job_description") or item.get("jobDescription", ""))
         bio = clean_text(item.get("candidate_bio") or item.get("candidateBio", ""))
@@ -154,18 +155,19 @@ def batch_compute_scores(data):
         candidate_skills = normalize_skills(item.get("candidate_skills") or item.get("candidateSkills", []))
         cleaned_inputs.append((job_desc, bio, job_skills, candidate_skills))
 
-        # For embedding reuse
+        # Preload into string_cache
         string_cache[job_desc] = None
         string_cache[bio] = None
         string_cache[" ".join(job_skills)] = None
         string_cache[" ".join(candidate_skills)] = None
 
-    # ✅ Batch embed only unique strings
+    # Step 2: Batch embed all unique strings
     to_embed = list(string_cache.keys())
     embeddings = embedder.encode(to_embed, convert_to_tensor=True)
     for i, text in enumerate(to_embed):
         string_cache[text] = embeddings[i]
 
+    # Step 3: Compute scores using cached embeddings
     results = []
     for job_desc, bio, job_skills, candidate_skills in cleaned_inputs:
         desc_embed = string_cache[job_desc]
@@ -186,13 +188,12 @@ def batch_compute_scores(data):
         )
 
         results.append({
-                "score": float(round(final_score * 100, 2)),
-                "bio_desc_score": float(round(bio_desc_score, 4)),
-                "skill_embed_score": float(round(skill_embed_score, 4)),
-                "fuzzy_score": float(round(fuzzy_score, 4)),
-                "tfidf_score": float(round(semantic_token_score, 4)),
-            })
-
+            "score": float(round(final_score * 100, 2)),
+            "bio_desc_score": float(round(bio_desc_score, 4)),
+            "skill_embed_score": float(round(skill_embed_score, 4)),
+            "fuzzy_score": float(round(fuzzy_score, 4)),
+            "tfidf_score": float(round(semantic_token_score, 4)),
+        })
 
     print(f"⚡ Batch scored {len(data)} pairs in {time.time() - t0:.2f}s")
     return results
